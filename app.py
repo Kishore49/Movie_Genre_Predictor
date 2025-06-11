@@ -2,10 +2,21 @@ import streamlit as st
 import re
 import numpy as np
 import pickle
+import nltk
 from nltk.stem import WordNetLemmatizer
 
+# ⬇️ Add this line to point NLTK to the local nltk_data folder
+nltk.data.path.append('./nltk_data')  # or use full path if needed
+
+# Streamlit page config
 st.set_page_config(page_title="Movie Genre Predictor", page_icon="🎬", layout="wide")
 
+# Load the lemmatizer (no need to re-download)
+@st.cache_resource
+def load_lemmatizer():
+    return WordNetLemmatizer()
+
+# Load vectorizer and model
 @st.cache_resource
 def load_artifacts():
     with open('vectorizer.pkl', 'rb') as f:
@@ -14,27 +25,31 @@ def load_artifacts():
         model = pickle.load(f)
     return vectorizer, model
 
-def clean_text(text):
-    lemmatizer = WordNetLemmatizer()
+# Text preprocessing
+def clean_text(text, lemmatizer):
     text = re.sub(r'http\S+|[^a-zA-Z]', ' ', text).lower()
     words = text.split()
     lemmatized = [lemmatizer.lemmatize(word) for word in words]
     return ' '.join(lemmatized)
 
+# Custom CSS
 st.markdown("""
     <style>
     .main {background-color: #f5f6fa;}
     .stButton>button {background-color: #4F8BF9; color: white;}
-    .stTextArea textarea {background-color: black;}
+    .stTextArea textarea {background-color: black; color: white;}
     </style>
 """, unsafe_allow_html=True)
 
+# Load resources
 try:
+    lemmatizer = load_lemmatizer()
     vectorizer, model = load_artifacts()
 except FileNotFoundError:
-    st.error("Model artifacts not found. Please run the training script.")
+    st.error("Model artifacts not found. Please ensure 'vectorizer.pkl' and 'model.pkl' are available.")
     st.stop()
 
+# App UI
 st.title("🎬 Movie Genre Predictor")
 st.markdown("Predict the genre of a movie based on its plot synopsis.")
 
@@ -48,18 +63,18 @@ show_probs = st.checkbox("Show genre probabilities")
 
 if st.button("Predict Genre"):
     if user_input.strip():
-        cleaned_input = clean_text(user_input)
+        cleaned_input = clean_text(user_input, lemmatizer)
         input_vector = vectorizer.transform([cleaned_input])
         prediction = model.predict(input_vector)[0]
         st.success(f"**Predicted Genre:** {prediction.capitalize()}")
 
         if show_probs and hasattr(model, "predict_proba"):
             proba = model.predict_proba(input_vector)[0]
-            proba_data = {
+            st.subheader("Genre Probabilities")
+            st.dataframe({
                 "Genre": model.classes_,
                 "Probability": np.round(proba, 3)
-            }
-            st.dataframe(proba_data)
+            })
     else:
         st.warning("Please enter a synopsis before predicting.")
 
