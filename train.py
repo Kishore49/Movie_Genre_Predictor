@@ -1,5 +1,3 @@
-# train_model.py
-
 import pandas as pd
 import re
 import nltk
@@ -11,18 +9,10 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-# --- Download NLTK data (only need to do this once) ---
-print("Downloading NLTK data...")
-try:
-    nltk.data.find('corpora/wordnet')
-    nltk.data.find('corpora/omw-1.4')
-except LookupError:
-    nltk.download('wordnet')
-    nltk.download('omw-1.4')
-print("NLTK data is available.")
+# ⬇️ Tell NLTK to use the local nltk_data directory
+nltk.data.path.append('./nltk_data')  # Adjust this if running from outside app folder
 
 # --- Text Cleaning Function ---
-# This function combines the cleaning steps from the notebook.
 def clean_text(text):
     lemmatizer = WordNetLemmatizer()
     text = re.sub(r'http\S+', '', text)
@@ -50,20 +40,18 @@ print("Text preprocessing complete.")
 
 # 3. Vectorize the text data using TF-IDF
 print("Vectorizing text data with TF-IDF...")
-# Using max_features to keep the vocabulary size manageable, which is a good practice.
-tfidf_vectorizer = TfidfVectorizer(max_features=10000) 
+tfidf_vectorizer = TfidfVectorizer(max_features=10000)
 X_train = tfidf_vectorizer.fit_transform(train_df['plot'])
 y_train = train_df['genre']
 print("Vectorization complete.")
 
-# 4. Train the classifier (using the best alpha from your notebook)
+# 4. Train the classifier
 print("Training the Multinomial Naive Bayes classifier...")
-# The notebook's GridSearchCV found alpha=2.0 to be optimal.
 classifier = MultinomialNB(alpha=2.0)
 classifier.fit(X_train, y_train)
 print("Classifier training complete.")
 
-# 5. Save the trained vectorizer and classifier to disk
+# 5. Save the artifacts
 print("Saving artifacts...")
 with open('vectorizer.pkl', 'wb') as f:
     pickle.dump(tfidf_vectorizer, f)
