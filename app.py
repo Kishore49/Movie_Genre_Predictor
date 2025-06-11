@@ -5,18 +5,8 @@ import pickle
 import nltk
 from nltk.stem import WordNetLemmatizer
 
-# ⬇️ Add this line to point NLTK to the local nltk_data folder
-nltk.data.path.append('./nltk_data')  # or use full path if needed
-
-# Streamlit page config
 st.set_page_config(page_title="Movie Genre Predictor", page_icon="🎬", layout="wide")
 
-# Load the lemmatizer (no need to re-download)
-@st.cache_resource
-def load_lemmatizer():
-    return WordNetLemmatizer()
-
-# Load vectorizer and model
 @st.cache_resource
 def load_artifacts():
     with open('vectorizer.pkl', 'rb') as f:
@@ -32,7 +22,6 @@ def clean_text(text, lemmatizer):
     lemmatized = [lemmatizer.lemmatize(word) for word in words]
     return ' '.join(lemmatized)
 
-# Custom CSS
 st.markdown("""
     <style>
     .main {background-color: #f5f6fa;}
@@ -43,7 +32,6 @@ st.markdown("""
 
 # Load resources
 try:
-    lemmatizer = load_lemmatizer()
     vectorizer, model = load_artifacts()
 except FileNotFoundError:
     st.error("Model artifacts not found. Please ensure 'vectorizer.pkl' and 'model.pkl' are available.")
