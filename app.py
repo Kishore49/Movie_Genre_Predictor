@@ -5,8 +5,20 @@ import pickle
 import nltk
 from nltk.stem import WordNetLemmatizer
 import pandas as pd
+import os
 
-nltk.data.path.append('./nltk_data')
+# Add this before you use WordNetLemmatizer or any NLTK corpus
+nltk_data_path = os.path.join(os.path.dirname(__file__), "nltk_data")
+nltk.data.path.append(nltk_data_path)
+
+try:
+    nltk.data.find("corpora/wordnet")
+except LookupError:
+    nltk.download("wordnet", download_dir=nltk_data_path)
+try:
+    nltk.data.find("corpora/omw-1.4")
+except LookupError:
+    nltk.download("omw-1.4", download_dir=nltk_data_path)
 
 st.set_page_config(page_title="Movie Genre Predictor", page_icon="🎬", layout="wide")
 
